@@ -2,32 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Data\GeorgianWords;
-use App\Services\AliasGame;
+use App\Services\NamiokobanaGame;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 use Native\Mobile\Facades\Device;
 
-class AliasGameController extends Controller
+class NamiokobanaGameController extends Controller
 {
-    private const SESSION_KEY = 'alias_game';
+    private const SESSION_KEY = 'namiokobana_game';
 
-    public function __construct(private readonly AliasGame $game) {}
+    public function __construct(private readonly NamiokobanaGame $game) {}
 
     public function start(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'teams' => ['required', 'array', 'min:2', 'max:4'],
+            'teams' => ['required', 'array', 'size:2'],
             'teams.*' => ['required', 'string', 'max:24'],
-            'duration' => ['required', Rule::in([45, 60, 90])],
-            'mode' => ['required', Rule::in(['rounds', 'points'])],
+            'duration' => ['required', Rule::in([30, 45, 60])],
             'rounds' => ['required', 'integer', 'min:1', 'max:10'],
-            'targetScore' => ['required', 'integer', 'min:10', 'max:100'],
-            'skipPenalty' => ['required', Rule::in([0, -1, '0', '-1'])],
-            'category' => ['required', Rule::in(array_keys(GeorgianWords::categories()))],
+            'wordSource' => ['sometimes', Rule::in(['players', 'app'])],
         ]);
+
+        $validated['wordSource'] ??= 'players';
 
         try {
             $state = $this->game->start($validated['teams'], $validated);
@@ -35,53 +33,50 @@ class AliasGameController extends Controller
             return $this->gameError($exception);
         }
 
-        $request->session()->forget('namiokobana_game');
+        $request->session()->forget('alias_game');
         $request->session()->put(self::SESSION_KEY, $state);
 
         return $this->stateResponse($state);
     }
 
-    public function startTurn(Request $request): JsonResponse
-    {
-        return $this->mutate($request, fn (array $state): array => $this->game->startTurn($state));
-    }
-
-    public function mark(Request $request): JsonResponse
+    public function word(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'result' => ['required', Rule::in(['correct', 'skipped'])],
-        ]);
-
-        $response = $this->mutate(
-            $request,
-            fn (array $state): array => $this->game->markWord($state, $validated['result']),
-        );
-
-        Device::vibrate();
-
-        return $response;
-    }
-
-    public function finishTurn(Request $request): JsonResponse
-    {
-        return $this->mutate($request, fn (array $state): array => $this->game->finishTurn($state));
-    }
-
-    public function review(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'index' => ['required', 'integer', 'min:0'],
-            'result' => ['required', Rule::in(['correct', 'skipped'])],
+            'word' => ['required', 'string', 'max:32'],
         ]);
 
         return $this->mutate(
             $request,
-            fn (array $state): array => $this->game->reviewWord(
-                $state,
-                (int) $validated['index'],
-                $validated['result'],
-            ),
+            fn (array $state): array => $this->game->setSecretWord($state, $validated['word']),
         );
+    }
+
+    public function reveal(Request $request): JsonResponse
+    {
+        return $this->mutate($request, fn (array $state): array => $this->game->reveal($state));
+    }
+
+    public function begin(Request $request): JsonResponse
+    {
+        return $this->mutate($request, fn (array $state): array => $this->game->beginGuessing($state));
+    }
+
+    public function finish(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'result' => ['required', Rule::in(['correct', 'missed'])],
+        ]);
+
+        $response = $this->mutate(
+            $request,
+            fn (array $state): array => $this->game->finishTurn($state, $validated['result']),
+        );
+
+        if ($validated['result'] === 'correct') {
+            Device::vibrate();
+        }
+
+        return $response;
     }
 
     public function next(Request $request): JsonResponse
@@ -123,12 +118,12 @@ class AliasGameController extends Controller
     private function gameError(InvalidArgumentException $exception): JsonResponse
     {
         $messages = [
-            'teams_invalid' => 'დაამატე მინიმუმ ორი გუნდი.',
+            'teams_invalid' => 'ნამიოკობანასთვის ორი გუნდი დაამატე.',
             'settings_invalid' => 'თამაშის პარამეტრები არასწორია.',
-            'deck_invalid' => 'არჩეულ ლექსიკონში სიტყვები ვერ მოიძებნა.',
+            'word_invalid' => 'შეიყვანე ერთი მოკლე სიტყვა ან ფრაზა.',
+            'deck_invalid' => 'ავტომატური რეჟიმისთვის სიტყვები ვერ მოიძებნა.',
             'phase_invalid' => 'ეს მოქმედება ახლა შეუძლებელია.',
             'result_invalid' => 'პასუხის ტიპი არასწორია.',
-            'review_invalid' => 'ამ სიტყვის შედეგი ვერ შეიცვალა.',
         ];
 
         return response()->json([

@@ -1,15 +1,13 @@
-# ალიასი
+# ქართული თამაშები
 
-Georgian team-based Alias game built with Laravel 13 and NativePHP Mobile 3.
+Two Georgian team word games built with Laravel 13 and NativePHP Mobile 3.
 
-## Game
+## Games
 
-- Play with 2–4 teams on one phone.
-- Explain the displayed word without saying it or using the same root.
-- Choose a 45, 60, or 90 second turn and a Georgian offline word deck.
-- Correct answers earn one point; skipped words can cost zero or one point.
-- Review and correct every answer before passing the phone to the next team.
-- End after a fixed number of rounds or when the target score is reached.
+- Choose **Alias** or **Namiokobana** from the main screen.
+- Alias supports 2–4 teams, timed turns, offline Georgian word decks, answer review, and round- or score-based games.
+- Namiokobana is played by two pairs: choose whether the opposing team enters the secret word or the app draws one automatically, then explain it using your agreed rules—spoken hints, gestures, or silent play.
+- Both games keep the scoreboard and rotate teams with equal turns on one phone.
 
 ## Local browser
 

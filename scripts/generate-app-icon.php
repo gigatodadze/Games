@@ -49,7 +49,7 @@ imagefilledellipse($image, 746, 240, 54, 54, $lime);
 imagefilledellipse($image, 820, 720, 54, 54, $coral);
 imagefilledellipse($image, 232, 776, 54, 54, $cream);
 
-$letter = 'ა';
+$letter = 'თ';
 $fontSize = 470;
 $box = imagettfbbox($fontSize, 0, $font, $letter);
 
@@ -76,7 +76,7 @@ if (! imagepng($image, $output, 9)) {
 imagedestroy($image);
 
 /**
- * Generate a full-screen NativePHP launch image that matches the Alias UI.
+ * Generate a full-screen NativePHP launch image for the game collection.
  */
 function createSplash(string $font, string $output): void
 {
@@ -111,7 +111,7 @@ function createSplash(string $font, string $output): void
 
     imagefilledellipse($splash, $cardX + 45, $cardY + 60, 74, 74, $pink);
 
-    $letter = 'ა';
+    $letter = 'თ';
     $letterSize = 340;
     $letterBox = imagettfbbox($letterSize, 0, $font, $letter);
     $letterWidth = $letterBox[2] - $letterBox[0];
@@ -120,7 +120,7 @@ function createSplash(string $font, string $output): void
     $letterY = (int) round($cardY + ($cardHeight - $letterHeight) / 2 - $letterBox[7] - 15);
     imagettftext($splash, $letterSize, 0, $letterX, $letterY, $navy, $font, $letter);
 
-    $title = 'ალიასი';
+    $title = 'თამაშები';
     $titleSize = 82;
     $titleBox = imagettfbbox($titleSize, 0, $font, $title);
     $titleWidth = $titleBox[2] - $titleBox[0];
